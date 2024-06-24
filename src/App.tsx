@@ -1,35 +1,148 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { type TodoItem } from "./types";
+import dayjs from "dayjs";
 function App() {
-  const [count, setCount] = useState(0)
+  const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [inputText, setInputText] = useState("");
+  const [mode, setMode] = useState<"ADD" | "EDIT">("ADD");
+  const [curTodoId, setCurTodoId] = useState("");
 
+  async function fetchData() {
+    const res = await axios.get<TodoItem[]>("api/todo");
+    setTodos(res.data);
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setInputText(e.target.value);
+  }
+
+  function handleSubmit() {
+    if (!inputText) return;
+    if (mode === "ADD") {
+      axios
+        .request({
+          url: "/api/todo",
+          method: "put",
+          data: { todoText: inputText },
+        })
+        .then(() => {
+          setInputText("");
+        })
+        .then(fetchData)
+        .catch((err) => alert(err));
+    } else {
+      axios
+        .request({
+          url: "/api/todo",
+          method: "patch",
+          data: { id: curTodoId, todoText: inputText },
+        })
+        .then(() => {
+          setInputText("");
+          setMode("ADD");
+          setCurTodoId("");
+        })
+        .then(fetchData)
+        .catch((err) => alert(err));
+    }
+  }
+
+  function handleDelete(id: string) {
+    axios
+      .delete("/api/todo", { data: { id } })
+      .then(fetchData)
+      .then(() => {
+        setMode("ADD");
+        setInputText("");
+      })
+      .catch((err) => alert(err));
+  }
+
+  function handleCancel() {
+    setMode("ADD");
+    setInputText("");
+    setCurTodoId("");
+  }
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="container">
+      <header>
+        <h1>Todo App</h1>
+      </header>
+      <main>
+        <div style={{ display: "flex", alignItems: "start" }}>
+          <input type="text" onChange={handleChange} value={inputText} />
+          <button onClick={handleSubmit}>
+            {mode === "ADD" ? "Submit" : "Update"}
+          </button>
+          {mode === "EDIT" && (
+            <button onClick={handleCancel} className="secondary">
+              Cancel
+            </button>
+          )}
+        </div>
+        <div>
+          {todos.sort(compareDate).map((item, idx) => {
+            const { date, time } = formatDateTime(item.createdAt);
+            const text = item.todoText;
+            return (
+              <article
+                key={item.id}
+                style={{
+                  display: "flex",
+                  gap: "0.5rem",
+                }}
+              >
+                <div>({idx + 1})</div>
+                <div>📅{date}</div>
+                <div>⏰{time}</div>
+                <div>📰{text}</div>
+                <div
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    setMode("EDIT");
+                    setCurTodoId(item.id);
+                    setInputText(item.todoText);
+                  }}
+                >
+                  {curTodoId !== item.id ? "🖊️" : "✍🏻"}
+                </div>
+
+                {mode === "ADD" && (
+                  <div
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    🗑️
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
+
+function formatDateTime(dateStr: string) {
+  if (!dayjs(dateStr).isValid()) {
+    return { date: "N/A", time: "N/A" };
+  }
+  const dt = dayjs(dateStr);
+  const date = dt.format("D/MM/YY");
+  const time = dt.format("HH:mm");
+  return { date, time };
+}
+
+function compareDate(a: TodoItem, b: TodoItem) {
+  const da = dayjs(a.createdAt);
+  const db = dayjs(b.createdAt);
+  return da.isBefore(db) ? -1 : 1;
+}
