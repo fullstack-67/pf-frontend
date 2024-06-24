@@ -1,10 +1,9 @@
-FROM node:22-alpine3.19 AS base
+FROM node:22-alpine3.19 AS builder
 WORKDIR /app
 COPY . .
-ENV NODE_ENV=production
+RUN npm ci
 RUN npm run build
 
 FROM nginx:1.27.0-alpine AS production
-
-COPY ./default.conf.template /etc/nginx/templates/default.conf.template
-COPY --from=development /app/dist /usr/share/nginx/html
+COPY ./nginx.conf.template /etc/nginx/templates/nginx.conf.template
+COPY --from=builder /app/dist /usr/share/nginx/html
