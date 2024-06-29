@@ -75,8 +75,8 @@ function App() {
       </header>
       <main>
         <div style={{ display: "flex", alignItems: "start" }}>
-          <input type="text" onChange={handleChange} value={inputText} />
-          <button onClick={handleSubmit}>
+          <input type="text" onChange={handleChange} value={inputText} data-cy="todo-text"/>
+          <button onClick={handleSubmit} data-cy="submit">
             {mode === "ADD" ? "Submit" : "Update"}
           </button>
           {mode === "EDIT" && (
