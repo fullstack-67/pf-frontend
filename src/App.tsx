@@ -85,7 +85,7 @@ function App() {
             </button>
           )}
         </div>
-        <div>
+        <div data-cy="todo-item-wrapper">
           {todos.sort(compareDate).map((item, idx) => {
             const { date, time } = formatDateTime(item.createdAt);
             const text = item.todoText;
@@ -100,7 +100,7 @@ function App() {
                 <div>({idx + 1})</div>
                 <div>📅{date}</div>
                 <div>⏰{time}</div>
-                <div>📰{text}</div>
+                <div data-cy='todo-item-text'>📰{text}</div>
                 <div
                   style={{ cursor: "pointer" }}
                   onClick={() => {
@@ -116,6 +116,7 @@ function App() {
                   <div
                     style={{ cursor: "pointer" }}
                     onClick={() => handleDelete(item.id)}
+                    data-cy='todo-item-delete'
                   >
                     🗑️
                   </div>
