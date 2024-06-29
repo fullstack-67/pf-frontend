@@ -75,7 +75,7 @@ function App() {
       </header>
       <main>
         <div style={{ display: "flex", alignItems: "start" }}>
-          <input type="text" onChange={handleChange} value={inputText} data-cy="todo-text"/>
+          <input type="text" onChange={handleChange} value={inputText} data-cy="input-text"/>
           <button onClick={handleSubmit} data-cy="submit">
             {mode === "ADD" ? "Submit" : "Update"}
           </button>
@@ -108,6 +108,7 @@ function App() {
                     setCurTodoId(item.id);
                     setInputText(item.todoText);
                   }}
+                  data-cy="todo-item-update"
                 >
                   {curTodoId !== item.id ? "🖊️" : "✍🏻"}
                 </div>
